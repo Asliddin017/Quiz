@@ -17,5 +17,3 @@ postgres_data/
 .DS_Store
 Thumbs.db
 
-# Seed script (faqat local)
-seed.py
