@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.database import get_db
-from app.core.security import get_password_hash
+from app.core.security import hash_password
 from app.models.models import User, Quiz, Question, Choice
 
 router = APIRouter()
@@ -20,26 +20,26 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
     asliddin = User(
         email="asliddin@example.com",
         username="Asliddin",
-        hashed_password=get_password_hash("root123"),
+        hashed_password=hash_password("root123"),
         role="admin",
     )
     alex = User(
         email="alex@example.com",
         username="Alex",
-        hashed_password=get_password_hash("root123"),
+        hashed_password=hash_password("root123"),
         role="admin",
     )
     # Create students
     student1 = User(
         email="ali@example.com",
         username="Ali",
-        hashed_password=get_password_hash("root123"),
+        hashed_password=hash_password("root123"),
         role="student",
     )
     student2 = User(
         email="zara@example.com",
         username="Zara",
-        hashed_password=get_password_hash("root123"),
+        hashed_password=hash_password("root123"),
         role="student",
     )
     db.add_all([asliddin, alex, student1, student2])
