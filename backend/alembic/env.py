@@ -16,6 +16,12 @@ database_url = os.environ.get(
     "DATABASE_URL",
     "postgresql+asyncpg://quiz_user:quiz_pass@postgres:5432/quiz_db",
 )
+# Railway postgres:// va postgresql:// ni asyncpg ga o'zgartirish
+if database_url.startswith("postgres://"):
+    database_url = database_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif database_url.startswith("postgresql://"):
+    database_url = database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
 config.set_main_option("sqlalchemy.url", database_url)
 
 from app.models.models import Base  # noqa: E402

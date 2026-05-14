@@ -10,5 +10,12 @@ class Settings(BaseSettings):
 
     model_config = {"env_file": ".env"}
 
+    def model_post_init(self, __context: object) -> None:
+        # Railway postgres:// formatini asyncpg ga o'zgartirish
+        if self.DATABASE_URL.startswith("postgres://"):
+            object.__setattr__(self, "DATABASE_URL", self.DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1))
+        elif self.DATABASE_URL.startswith("postgresql://"):
+            object.__setattr__(self, "DATABASE_URL", self.DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1))
+
 
 settings = Settings()
