@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, quiz, results, session, websocket
+from app.api.v1 import auth, quiz, results, session, websocket, seed
 from app.core.redis_client import close_redis, init_redis
 
 
@@ -29,6 +29,7 @@ app.include_router(quiz.router, prefix="/api/v1")
 app.include_router(session.router, prefix="/api/v1")
 app.include_router(results.router, prefix="/api/v1")
 app.include_router(websocket.router, prefix="/api/v1")
+app.include_router(seed.router, prefix="/api/v1")
 
 
 @app.get("/health")
