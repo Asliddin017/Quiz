@@ -34,7 +34,7 @@ async def seed_database(db: AsyncSession = Depends(get_db)):
             "title": "Python Asoslari",
             "description": "Python dasturlash tili bo'yicha test",
             "questions": [
-                {"text": "Python qaysi tilda yozilgan?", "choices": [("C", False), ("Java", False), ("C++", True), ("Rust", False)]},
+                {"text": "Python qaysi tilda yozilgan?", "choices": [("C", True), ("Java", False), ("C++", False), ("Rust", False)]},
                 {"text": "Python da list yaratish uchun qaysi belgi?", "choices": [("{}", False), ("[]", True), ("()", False), ("<>", False)]},
                 {"text": "Python da comment qo'yish uchun qaysi belgi?", "choices": [("//", False), ("/*", False), ("#", True), ("--", False)]},
                 {"text": "O'zgaruvchi turini aniqlash funksiyasi?", "choices": [("typeof()", False), ("type()", True), ("gettype()", False), ("vartype()", False)]},

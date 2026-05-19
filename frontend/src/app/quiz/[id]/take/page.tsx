@@ -27,15 +27,37 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
 
   const wsRef = useRef<WebSocket | null>(null);
   const savingRef = useRef<Record<number, boolean>>({});
+  const handleFinishRef = useRef<() => Promise<void>>(async () => {});
+
+  const handleFinish = async () => {
+    setSubmitting(true);
+    setError('');
+    try {
+      const result = await api.post<{
+        score: number; total_questions: number;
+        correct_answers: number; percentage: number;
+      }>(`/sessions/${sessionId}/finish`);
+      wsRef.current?.close();
+      router.push(
+        `/results?score=${result.score}&total=${result.total_questions}&correct=${result.correct_answers}&pct=${result.percentage}`
+      );
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : 'Xato yuz berdi');
+      setSubmitting(false);
+    }
+  };
+  handleFinishRef.current = handleFinish;
 
   useEffect(() => {
     const token = getToken();
     if (!token || !sessionId) { router.push('/login'); return; }
 
-    api.get<Quiz>(`/quizzes/${params.id}`).then((q) => {
-      const sorted = [...q.questions].sort((a, b) => a.order - b.order);
-      setQuiz({ ...q, questions: sorted });
-    });
+    api.get<Quiz>(`/quizzes/${params.id}`)
+      .then((q) => {
+        const sorted = [...q.questions].sort((a, b) => a.order - b.order);
+        setQuiz({ ...q, questions: sorted });
+      })
+      .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Quiz yuklanmadi'));
 
     const wsUrl = `${process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000'}/api/v1/ws/session/${sessionId}?token=${token}`;
     const ws = new WebSocket(wsUrl);
@@ -50,10 +72,7 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
       if (data.type === 'time_up') {
         setTimeUp(true);
         setRemaining(0);
-        // Vaqt tugadi — avtomatik yakunlash
-        setTimeout(() => {
-          document.getElementById('auto-finish-btn')?.click();
-        }, 500);
+        setTimeout(() => handleFinishRef.current(), 500);
       }
     };
     ws.onerror = () => setError('WebSocket ulanishda xato');
@@ -81,24 +100,6 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
     saveAnswer(questionId, choiceId);
   };
 
-  const handleFinish = async () => {
-    setSubmitting(true);
-    setError('');
-    try {
-      const result = await api.post<{
-        score: number; total_questions: number;
-        correct_answers: number; percentage: number;
-      }>(`/sessions/${sessionId}/finish`);
-      wsRef.current?.close();
-      router.push(
-        `/results?score=${result.score}&total=${result.total_questions}&correct=${result.correct_answers}&pct=${result.percentage}`
-      );
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Xato yuz berdi');
-      setSubmitting(false);
-    }
-  };
-
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
@@ -106,6 +107,9 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
   };
 
   if (!quiz) {
+    if (error) {
+      return <p className="text-red-400 mt-8 text-center">{error}</p>;
+    }
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
@@ -119,9 +123,6 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      {/* Yashirin avtomatik yakunlash tugmasi */}
-      <button id="auto-finish-btn" onClick={handleFinish} className="hidden" />
-
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold truncate">{quiz.title}</h1>

@@ -26,6 +26,11 @@ def _log_session_finish_sync(session_id: int, username: str, percentage: float) 
     print(f"[LOG] Session {session_id} finished | user={username} | score={percentage}%")
 
 
+async def _run_log_in_executor(session_id: int, username: str, percentage: float) -> None:
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(_executor, _log_session_finish_sync, session_id, username, percentage)
+
+
 @router.post("/start/{quiz_id}", response_model=SessionStartResponse)
 async def start_session(
     quiz_id: int,
@@ -134,12 +139,8 @@ async def finish_session(
     redis = get_redis()
     await redis.delete(f"session:{session_id}:deadline")
 
-    # run_in_executor — sinxron logging ni bloklasdan bajarish
-    loop = asyncio.get_event_loop()
     background_tasks.add_task(
-        loop.run_in_executor,
-        _executor,
-        _log_session_finish_sync,
+        _run_log_in_executor,
         session_id,
         user.username,
         result["percentage"],

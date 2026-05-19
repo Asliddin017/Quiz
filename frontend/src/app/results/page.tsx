@@ -44,11 +44,13 @@ export default function ResultsPage() {
   const router = useRouter();
   const [results, setResults] = useState<Result[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
 
   useEffect(() => {
     if (!getToken()) { router.push('/login'); return; }
     api.get<Result[]>('/results/me')
       .then(setResults)
+      .catch((e: unknown) => setFetchError(e instanceof Error ? e.message : 'Natijalar yuklanmadi'))
       .finally(() => setLoading(false));
   }, [router]);
 
@@ -67,7 +69,13 @@ export default function ResultsPage() {
 
       <JustFinishedCard />
 
-      {results.length === 0 && (
+      {fetchError && (
+        <div className="bg-red-900/30 border border-red-600/50 text-red-300 px-4 py-3 rounded-xl mb-6 text-sm">
+          {fetchError}
+        </div>
+      )}
+
+      {results.length === 0 && !fetchError && (
         <div className="text-center text-gray-500 py-16">
           <p className="text-lg">Hali test topshirilmagan</p>
           <Link href="/" className="text-blue-400 hover:underline text-sm mt-2 inline-block">

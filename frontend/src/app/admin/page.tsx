@@ -92,6 +92,7 @@ export default function AdminPage() {
       setDescription('');
       setDuration(10);
       setQuestions([defaultQuestion()]);
+      api.get<QuizItem[]>('/quizzes/my').then(setQuizzes).catch(() => {});
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Xato yuz berdi');
     } finally {
