@@ -5,11 +5,12 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.redis_client import get_redis
-from app.models.models import Answer, Quiz, QuizSession, User
+from app.models.models import Answer, Question, Quiz, QuizSession, User
 from app.schemas.quiz import AnswerSubmit, SessionStartResponse
 from app.schemas.result import ResultResponse
 from app.services.result_service import calculate_and_save_result
@@ -113,7 +114,25 @@ async def submit_answer(
             choice_id=body.choice_id,
         ))
     await db.commit()
-    return {"message": "Javob saqlandi"}
+
+    # Return correctness info so the frontend can show immediate feedback
+    q_res = await db.execute(
+        select(Question)
+        .options(selectinload(Question.choices))
+        .where(Question.id == body.question_id)
+    )
+    question_obj = q_res.scalar_one_or_none()
+
+    is_correct = False
+    correct_choice_id: int | None = None
+    if question_obj:
+        for c in question_obj.choices:
+            if c.is_correct:
+                correct_choice_id = c.id
+            if body.choice_id is not None and c.id == body.choice_id and c.is_correct:
+                is_correct = True
+
+    return {"ok": True, "is_correct": is_correct, "correct_choice_id": correct_choice_id}
 
 
 @router.post("/{session_id}/finish", response_model=ResultResponse)
