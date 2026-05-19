@@ -22,6 +22,15 @@ interface QuestionReview {
   answered: boolean;
 }
 
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function buildReview(
   quiz: Quiz,
   answers: Record<number, number>,
@@ -109,7 +118,9 @@ export default function TakeQuizPage({ params }: { params: { id: string } }) {
 
     api.get<Quiz>(`/quizzes/${params.id}`)
       .then((q) => {
-        const sorted = [...q.questions].sort((a, b) => a.order - b.order);
+        const sorted = [...q.questions]
+          .sort((a, b) => a.order - b.order)
+          .map((question) => ({ ...question, choices: shuffleArray(question.choices) }));
         setQuiz({ ...q, questions: sorted });
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : 'Quiz yuklanmadi'));
